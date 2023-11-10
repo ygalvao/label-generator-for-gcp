@@ -1,0 +1,178 @@
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+input[type="submit"] {
+    font-weight: bold;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+/*#main {
+    display: flex;
+    justify-content: center;
+}*/
+
+#main {
+    width: 575px;
+    margin: 0 auto;
+    margin-top: 30px;
+}
+
+label {
+    position:relative;
+    left:10px;
+    padding-right: 10px;
+    margin-bottom: 24px;
+}
+
+.checkbox_options {
+    margin-top: 3%;
+}
+
+.checkbox_options_labels {
+    display: inline;
+}
+
+#textarea {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.field {
+    /*position:relative;
+    right: -50px;*/
+    float: right;
+    margin-bottom: 10px;
+}
+
+.texts_for_packages {
+    display: none;
+    width: 70%;
+    float: left;
+}
+
+.product_qty {
+    width: 22%;
+    margin-bottom: 18px;
+}
+
+.checkbox {
+    display: inline;
+    margin-left: 10px;
+    margin-top: 5px;
+}
+
+.labels_labels {
+    margin-left: 5%;
+}
+
+#radio1 {
+    display: none;
+    margin-top: -10px;
+    margin-bottom: 12px;
+}
+
+#text1 {
+    display: none;
+}
+
+#container1 {
+    margin-top: 10px;
+    margin-bottom: 25px;
+    display: none;
+}
+
+#container2 {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+#container4 {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+#container3 {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    display: none;
+    padding-right: 15px;
+}
+  
+.column {
+    flex: 50%;
+}
+
+.column2 {
+    flex: 22%;
+}
+
+.column3 {
+    flex: 78%;
+}
+
+#result {
+    margin-top: 15px;
+    padding-top: 40px;
+    text-align: center;
+}
+
+#loader {
+    position: absolute;
+    left: 50%;
+    z-index: 1;
+    margin-top: 75px;
+    display: none;
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #81982F; /* PrintPro's green */
+    border-bottom: 16px solid #81982F; /* PrintPro's green */
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  #time {
+    font-size: 30px;
+  }
+
+  #session_expiring {
+    margin-top: 70px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .div_for_package {
+    text-align: center;
+  }
+
+  #download_link {
+    font-size: 20;
+  }
+
+  #package_desc_qty {
+    font-size: 18;
+  }

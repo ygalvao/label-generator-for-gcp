@@ -1,0 +1,397 @@
+<html>
+  <head>
+    <title>Label Maker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script src="{{ url_for('static', filename='jquery-3.6.3.min.js') }}"></script>
+    <script>
+      $SCRIPT_ROOT = {{ request.script_root|tojson }};
+
+      $(function() {
+        $('#fetch').bind('submit', function() {
+          $.getJSON($SCRIPT_ROOT + '/_show_wo_info', {
+            wo_n: $('input[name="wo_n"]').val()
+          }, function(data) {
+            $("#destination").text(data.destination_address);
+            $("#attn").text(data.attn);
+            document.getElementById("destination").disabled = false;
+            document.getElementById("attn").disabled = false;
+            document.getElementById("package_type").disabled = false;
+            document.getElementById("packages_qty").disabled = false;
+            document.getElementById("input_product_desc_check").disabled = false;
+            document.getElementById("submit_form").disabled = false;
+            document.getElementById("add_info").disabled = false;
+            document.getElementById("container1").style.display = "flex";
+            document.getElementById("container2").style.display = "flex";
+            document.getElementById("container4").style.display = "flex";
+            document.getElementById("textarea").style.display = "block";
+
+            $('#checkbox_options').empty();
+            $('#packages_info').empty();
+            $('#result').remove();
+            document.getElementById("generate_label").reset();
+            document.getElementById("container3").style.display = "none";
+
+            qty_of_items = data.products.length;
+
+            for (i = 0; i < qty_of_items; i++) {
+              var checkboxInput = $('<input id="option_' + i + '" type="checkbox" class="checkbox_options" name="product'+ ''/*i*/ + '" value=' + '\'' + data.products[i] + '\' onchange="checkLength(this); emptyPackagesInfo();">');
+              checkboxInput.appendTo('#checkbox_options');
+              var label = $('<label for="option_' + i + '" class="checkbox_options_labels">' + data.products[i] + '</label><br>');
+              label.appendTo('#checkbox_options');
+            }
+
+          });
+          return false;
+        });
+      });
+
+      checked = 0;
+
+      function checkLength(checkbox) {
+        if (checkbox.checked == true) {
+          window.checked++;
+        } else {
+          window.checked--;
+        }
+        
+        if (checked > 1) {
+          document.getElementById("input_product_qty_check").disabled = false;
+        } else {
+          document.getElementById("input_product_qty_check").checked = false;
+          document.getElementById("input_product_qty_check").disabled = true;
+        }
+      }
+
+      var validateForm = function() {
+        var checks = $('.checkbox_options:checked'/*input[type="checkbox"]:checked'*/).map(function() {
+          return $(this).val();
+        }).get();
+        //console.log(checks);
+        document.getElementById("option_0").value = '"' + checks + '"';
+
+        if (radio2.checked == true) {
+          var text_inputs = $('.texts_for_packages').map(function() {
+            return $(this).val() + '||';
+          }).get();
+          //console.log(text_inputs);
+          document.getElementById("texts_for_all_packages").value = '"' + text_inputs + '"';
+        }
+
+        var number_inputs = $('.product_qty').map(function() {
+          return $(this).val();//.toString();
+        }).get();
+        document.getElementById("products_qty").value = '"' + number_inputs + '"';
+        document.getElementById("wo_n2").value = document.getElementById("wo_n").value;
+        document.getElementById("qty_of_chosen_items").value = checked;
+
+        return true;
+      }
+
+      function checkRadio2() {
+        if (radio2.checked == true) {
+                document.getElementById("package_desc_qty").innerHTML = "<u>Description and quantity</u> of items for each package";
+              } else {
+                document.getElementById("package_desc_qty").innerHTML = "<u>Quantity</u> of items for each package";
+              }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="main">
+      <form id="fetch" onsubmit="resetCountdown()">
+        <label>Work Order #:</label>
+        <input class="field" id="wo_n"  name="wo_n" type="number">
+        <br>
+        <input id="submit_wo_n" class="field" type="submit" name="Submit" value="Fetch Work Order">
+      </form>
+      <br><br>
+      <form id="generate_label" action="{{ url_for('index') }}" method="POST" onsubmit="showLoader(); resetCountdown(); return validateForm();">
+        <div id="textarea">
+          <div class="row">
+            <label style="flex: 30%;">"TO" Address:</label>
+            <textarea id="destination" class="field" id="to_address"  name="to_address" rows="3" cols="35" style="flex: 70%;" disabled></textarea>
+          </div>
+          <br>
+          <div class="row">
+            <label for="attn" style="flex: 30%;">Attn. (optional):</label>
+            <textarea class="field" id="attn"  name="attn" rows="1" style="flex: 70%;" disabled></textarea>
+          </div>
+        </div>
+        <!--<label for="change_address"> Change the destination address</label>
+        <input class="checkbox" type="checkbox" id="change_address" name="change_address" value="yes" onchange="yesnoCheck(this);" disabled>
+        <br><br>-->
+        <div id="container1" class="row">
+          <div class="column">
+            <label>Choose the product:</label>
+          </div>
+          <div id="checkbox_options" class="column">
+          </div>
+        </div>
+        <div id="container2" class="row">
+          <div class="column">
+            <label for="input_product_desc_check">Change product/package desc.:</label>
+          </div>
+          <div class="column">
+            <input class="checkbox" type="checkbox" id="input_product_desc_check" name="input_product_desc_check" value="yes" onchange="yesnoCheck(this);" disabled>
+          </div>
+        </div>
+        <div id="container4" class="row">
+          <div class="column">
+            <label for="input_product_qty_check">Set quantities by item:</label>
+          </div>
+          <div class="column">
+            <input class="checkbox" type="checkbox" id="input_product_qty_check" name="input_product_qty_check" value="2" onchange="emptyPackagesInfo();" disabled>
+          </div>
+        </div>
+        <div id="radio1" class="row">
+          <div class="column">
+            <input class="checkbox radio" id="input_product_radio" name="choose_how_to_input" type="radio" value="all" disabled>
+            <label for="input_product_radio">Same input for everything</label>
+          </div>
+          <div class="column">
+            <input class="checkbox radio" id="input_product_radio2" name="choose_how_to_input" type="radio" value="each" disabled>
+            <label for="input_product_radio2">One input for each package</label>
+          </div>
+          <br><br>
+        </div>
+        <div id="text1">
+          <label>Product/package description:</label>
+          <input class="field" id="input_product_desc"  name="product" type="text" disabled>
+          <br><br>
+        </div>
+        <label for="package_type">Type of package:</label>
+        <select class="field" id="package_type"  name="package_type" required disabled>
+          <option value="box" selected>Box</option>
+          <option value="envelope">Envelope</option>
+          <option value="package">Package</option>
+          <option value="roll">Roll</option>
+        </select>
+        <br><br>
+        <label>Quantity of packages:</label>
+        <input  class="field" id="packages_qty"  name="packages_qty" type="number" onkeyup="addPackage(this)" required disabled>
+        <br><br>
+        <div id="container3" class="row">
+          <label id="package_desc_qty" style="text-align: center;"><u>Quantity</u> of items for each package</label>
+          <div id="packages_info_labels" class="column2">
+          </div>
+          <div id="packages_info" class="column3">
+          </div>
+        </div>
+        <br>
+        <label>Additional information (optional):</label>
+        <input  class="field" id="add_info"  name="add_info" type="text" disabled>
+        <br><br>
+        <input id="products_qty" type="text" name="products_qty" class="hidden">
+        <input id="texts_for_all_packages" type="text" name="products" class="hidden">
+        <input id="qty_of_chosen_items" type="number" name="qty_of_chosen_items" class="hidden">
+        <input id="wo_n2" class="hidden"  name="wo_n2" type="number">
+        <input id="submit_form" class="field" type="submit" name="Submit" value="Generate Label" disabled>
+      </form>
+    </div>
+    <div id="session_expiring">
+      <span id="timer" class="hidden">
+        <span id="time">300</span> seconds      
+      </span>
+    </div>
+    <div id="loader"></div>
+{% if result %}
+    <div id="result">
+      <img src onerror='resultLoaded();'>
+      <h2>The PDF file is ready!</h2><br>
+      <a id="download_link" href="{{ link_to_pdf }}" target="_blank">Click here to download it.</a>
+      <br><br><br><br><br><br>
+      <a href=".">Refresh the page</a>
+    </div>
+{% endif %}
+    <script>
+      var counter = 300;
+
+      function countdown() {
+        counter--;
+        // Display 'counter' wherever you want to display it.
+        if (counter <= 0) {
+            clearInterval(interval);
+            $('#main').remove();
+            $('#session_expiring').html('<h3>Session expired after 5 minutes with no interaction!</h3><br><h3>Please, refresh the page.</h3>');
+            return;
+        } else {
+          $('#time').text(counter);
+          console.log("Countdown: timer --> " + counter);
+        }
+      }
+
+      var interval = setInterval(countdown, 1000);
+
+      function resetCountdown(){
+        window.counter = 300;
+        clearInterval(interval);  // clear the interval
+        interval = setInterval(countdown, 1000);  // restart
+      }      
+
+      function yesnoCheck(checkbox) {
+        /*if (checkbox.value == "yes" && checkbox.checked == true) {
+          alert("Enter the destination address. It should have 2 or 3 lines, and the 1st line must be the company (customer) name.");
+          document.getElementById("destination").disabled = false;
+        } else {
+          document.getElementById("destination").disabled = true;
+        }*/
+        var checkbox_options = document.getElementsByClassName("checkbox_options");
+        if (checkbox.value == "yes" && checkbox.checked == true) {
+          document.getElementById("radio1").style.display = "flex";
+          document.getElementById("input_product_radio").disabled = false;
+          document.getElementById("input_product_radio2").disabled = false;
+          
+          for (var i = 0; i < checkbox_options.length; i++) {
+            checkbox_options.item(i).required = false;
+            if (checkbox_options.item(i).checked == true) {
+              checkbox_options.item(i).checked = false;
+              checkLength(checkbox_options.item(i));
+            }
+            checkbox_options.item(i).disabled = true;
+          }          
+
+        } else {
+          document.getElementById("radio1").style.display = "none";
+          document.getElementById("input_product_desc").disabled = true;
+          document.getElementById("input_product_radio").checked = false;
+          document.getElementById("input_product_radio").disabled = true;
+          document.getElementById("input_product_radio2").checked = false;
+          document.getElementById("input_product_radio2").disabled = true;
+
+          for (var i = 0; i < checkbox_options.length; i++) {
+            //checkbox_options.item(i).required = true;
+            checkbox_options.item(i).disabled = false;
+          }
+        }
+        emptyPackagesInfo();
+        checkRadio2();
+      }
+
+      function emptyPackagesInfo() {
+        $('#packages_info_labels').empty();
+        $('#packages_info').empty();
+        $('#packages_qty').val('');
+
+        if (document.getElementById('input_product_qty_check').checked == true) {
+          document.getElementById('input_product_desc_check').checked = false;
+          document.getElementById('input_product_desc_check').disabled = true;
+        } else {
+          document.getElementById('input_product_desc_check').disabled = false;
+        }
+      }
+
+      var radio1 = document.getElementById("input_product_radio");
+      var radio2 = document.getElementById("input_product_radio2");
+      var check2 = document.getElementById("input_product_qty_check");
+
+      var rad = document.getElementsByClassName("radio");
+      var prev = null;
+      for (var i = 0; i < rad.length; i++) {
+          rad[i].addEventListener('change', function() {
+              (prev) ? console.log(prev.value): null;
+              if (this !== prev) {
+                  prev = this;
+              }
+
+              if (radio1.checked == true) {
+                emptyPackagesInfo();
+                document.getElementById("text1").style.display = "block";
+                document.getElementById("input_product_desc").required = true;
+                document.getElementById("input_product_desc").disabled = false;                
+              } else {
+                emptyPackagesInfo();
+                document.getElementById("text1").style.display = "none";
+                document.getElementById("input_product_desc").required = false;
+                document.getElementById("input_product_desc").disabled = true;        
+              }
+
+              checkRadio2();
+          });
+      }
+
+      /*function yesnoRadio2(radio2) {
+        if (radio2.checked == true) {
+          document.getElementById("texts_column").style.display = "block";
+          document.getElementById("text_package").required = true;
+          document.getElementById("text_package").disabled = false;          
+        } else {
+          document.getElementById("texts_column").style.display = "none";
+          document.getElementById("text_package").required = false;
+          document.getElementById("text_package").disabled = true;          
+        }
+      }*/
+
+      function addPackage(number) {
+        document.getElementById("container3").style.display = "flex";
+        $('#packages_info').empty();
+        $('#packages_info_labels').empty();
+
+        for (i = 0; i < number.value; i++) {
+          if (check2.checked == true) {
+            var div = $('<div id="div_for_package_' + i + '" class="div_for_package"></div>');
+            div.appendTo('#packages_info');
+            var label = $('<label for="text_for_package_' + i + '" class="labels_labels">Package ' + (i+1) + ':</label>');
+            label.appendTo('#packages_info_labels');
+            var textInput = $('<input id="text_for_package_' + i + '" type="text" class="field texts_for_packages" name="texts_for_packages" placeholder="Description" style="width: 50%;" disabled>');
+            textInput.appendTo('#div_for_package_'+ i);
+            for (n = 0; n < checked; n++) {
+              var numberInput = $('<input id="items_qty_' + i + '_' + n + '" type="number" class="product_qty" name="items_qty'+ ''/*i*/ + '" placeholder="Item '+ (n+1) + '" style="width: 13%; margin-right: 5px;" required>');
+              numberInput.appendTo('#div_for_package_'+ i);
+            }
+          } else {
+            var div = $('<div id="div_for_package_' + i + '" class="div_for_package"></div>');
+            div.appendTo('#packages_info');
+            var label = $('<label for="text_for_package_' + i + '" class="labels_labels">Package ' + (i+1) + ':</label>');
+            label.appendTo('#packages_info_labels');
+            var textInput = $('<input id="text_for_package_' + i + '" type="text" class="field texts_for_packages" name="texts_for_packages" placeholder="Description" disabled>');
+            textInput.appendTo('#div_for_package_'+ i);
+            var numberInput = $('<input id="items_qty_' + i + '" type="number" class="product_qty" name="items_qty'+ ''/*i*/ + '" placeholder="Item qty." required>');
+            numberInput.appendTo('#div_for_package_'+ i);
+          }
+        }
+        
+        var texts_for_packages = document.getElementsByClassName("texts_for_packages");
+
+        if (radio2.checked == true) {
+          for (var i = 0; i < texts_for_packages.length; i++) {
+            texts_for_packages.item(i).required = true;
+            texts_for_packages.item(i).disabled = false;
+            texts_for_packages.item(i).style.display = "inline-block";
+          }
+                    
+        }/* else {
+          document.getElementById("texts_column").style.display = "none";
+          document.getElementById("text_package").required = false;
+          document.getElementById("text_package").disabled = true;          
+        }*/
+      }
+
+      function showLoader() {
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("submit_form").disabled = true;
+        document.getElementById("submit_wo_n").disabled = true;
+        document.getElementById("main").style.display = "none";
+        document.getElementById("loader").scrollIntoView({
+            behavior: 'auto',
+            block: 'center',
+            inline: 'center'
+        });
+      }
+
+      function showPage() {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("result").style.display = "block";
+        /*document.getElementById("submit_form").disabled = false;*/
+      }
+
+      var myVar;
+      function resultLoaded() {
+        myVar = setTimeout(showPage, 500);
+        $('#main').remove();
+      }
+    </script>
+  </body>
+</html>
