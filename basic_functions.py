@@ -6,7 +6,7 @@
 #                                                             #
 #*************************************************************#
 
-import os, json, sys, google.cloud.logging, logging
+import os, json, sys, google.cloud.logging, logging, traceback
 
 #client = google.cloud.logging.Client()
 
@@ -76,12 +76,12 @@ def ask_for_data(required_data:tuple, file_name_no_extension:str, ask:bool=True)
         for data in required_data:
             data_dict[data] = input(f'Enter the {data}: ')
 
-        open(file_name_no_extension+'.conf', 'w').write(json.dumps(data_dict))
+        open(file_name_no_extension+'.json', 'w').write(json.dumps(data_dict))
     else:
         for data in required_data:
             data_dict[data[0]] = data[1]
 
-        open(file_name_no_extension+'.conf', 'w').write(json.dumps(data_dict))
+        open(file_name_no_extension+'.json', 'w').write(json.dumps(data_dict))
     
     print()
 

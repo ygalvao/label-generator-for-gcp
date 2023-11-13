@@ -18,32 +18,112 @@ from openpyxl.drawing.image import Image
 from openpyxl.worksheet.page import PrintPageSetup
 from google.cloud import storage
 from oauth2client.service_account import ServiceAccountCredentials
+from intuitlib.client import AuthClient
+from intuitlib.enums import Scopes
+from quickbooks import QuickBooks
+from quickbooks.objects.invoice import Invoice
 
-endpoint_url = ''
+# Declaring some constants and variables
+## For Intuit
+CALLBACK_URI = 'https://developer.intuit.com/v2/OAuth2Playground/RedirectUrl'
+intuit_keys = json.load(open('intuit_keys.json', 'r'))
+intuit_temp_keys = json.load(open('intuit_temp_keys.json', 'r'))
+
+## For Google
 gcp_project = json.load(open('google-creds.json', 'r'))['project_id']
 
-def products_to_list(value:str)->list:
+# Defining functions
+def get_tokens(auth_client:object)->tuple:
     """
-    Converts a string of product names into a list of product names. 
-
-    Arguments:
-        value (str): a string of product names. If more than one product name is provided, they should be separated by '||'.
-
-    Returns:
-        list: a list of product names. If a single product name is provided, a list with a single element is returned. If multiple product names are provided, separated by '||', a list of all product names is returned.
     """
 
-    str_value = str(value)
+    def finally_get_the_tokens(auth_code:str, realm_id:str)->str:
+        ''''''
 
-    if '|' in str_value:
-        values = str_value.split('||')
+        ## Getting the tokens from Intuit server
+        try:
+            auth_client.get_bearer_token(auth_code, realm_id=realm_id)
+        except Exception as e:
+            print('Refresh your tokens! Exception:', e)
+        else:
+            access_t = auth_client.access_token
+            refresh_t = auth_client.refresh_token
+
+        return (access_t, refresh_t)
+
+    uri = auth_client.get_authorization_url([Scopes.ACCOUNTING]) # Gets the uri from Intuit server
+    print('Please, go to the following URL and authorize the app:\n\n', uri, '\n')
+
+    time.sleep(8)
+
+    ### Getting the auth code and realm id
+    try:
+        time.sleep(5)
+        auth_code = input('Enter the auth code: ')
+        realm_id = input('Enter the realm id: ')
+    except Exception as e:
+        logging.critical(f'Exception: {traceback.format_exc()}')
     else:
-        values = []
-        values.append(str_value)
+        auth_code = auth_code
+        realm_id = realm_id
+        tokens = finally_get_the_tokens(auth_code, realm_id)
+        return (('access_token', tokens[0]), ('refresh_token', tokens[1]))
 
-    return values
+    return
 
-def get_df_from_api(data:req.Response)->pd.DataFrame:
+def authenticate_on_intuit(args:list=args, intuit_keys:dict=intuit_keys, intuit_temp_keys:dict=intuit_temp_keys)->object:
+    """"""
+
+    uri = CALLBACK_URI
+    auth_client = AuthClient(
+        client_id=intuit_keys['client_id'],
+        client_secret=intuit_keys['client_secret'],
+        redirect_uri=uri,
+        environment='sandbox',
+        refresh_token=intuit_temp_keys['refresh_token'],
+    )
+
+    try:
+        client = QuickBooks(
+            auth_client=auth_client,
+            refresh_token=auth_client.refresh_token,
+            company_id=intuit_keys['company_id']
+        )
+    except Exception as e:
+        logging.warning(f'Authentication error! Try refreshing the tokens!\n\nException: {e}\n')
+        logging.info('The program will now try to refresh the tokens.')
+        try:
+            intuit_temp_keys = ask_for_data(get_tokens(auth_client), 'intuit_temp_keys', ask=False)
+            auth_client.refresh_token = intuit_temp_keys['refresh_token']
+            client = QuickBooks(
+                auth_client=auth_client,
+                refresh_token=auth_client.refresh_token,
+                company_id=intuit_keys['company_id']
+            )
+        except:
+            raise e
+
+    return auth_client, client
+
+def import_qbo_objects_list_to_df(object_:object, order_by:str, max_results:int, client:object)->pd.DataFrame:
+    """"""
+
+    # Importing objects - getting a list of objects from Intuit API
+    new_objects_list = [None]
+    objects = []
+    start_n = 1
+
+    while new_objects_list != []:
+        new_objects_list = object_.all(order_by=order_by, start_position=start_n, max_results=max_results, qb=client)
+        objects += new_objects_list
+        start_n += max_results
+
+    # Importing objects' "__dict__" into a Pandas DataFrame
+    final_df = pd.DataFrame([vars(new_object) for new_object in objects])
+
+    return final_df
+
+def get_ds_from_api(main_object:object)->pd.Series:
     """
     Imports the data from all orders available in the designated API into a Pandas DataFrame.
 
@@ -53,51 +133,49 @@ def get_df_from_api(data:req.Response)->pd.DataFrame:
     """
 
     try:
-        df = pd.read_json(data.text)
-        if df.shape[0] <= 0:
+        ds = pd.Series(main_object.to_dict())
+        if ds.shape[0] <= 0:
             raise ValueError
     except ValueError:
-        logging.warning('No order was found!\n')
+        logging.warning('No invoice or order was found!\n')
         return
     else:
         try:
-            df = df.applymap(lambda x: unescape(x) if type(x) == str else x)
+            ds = ds.applymap(lambda x: unescape(x) if type(x) == str else x)
         except Exception as e:
             logging.error('Error when escaping HTML characters!')
             logging.critical(f'Exception: {e}')
         else:
-            df_ready = df.copy()
-            for column in ['products_title', 'products_quantity', 'productsize', 'products_name', 'products_price', 'features_details', 'products_perunit_price']:
-                df_ready[column] = df[column].apply(products_to_list)
+            ds_ready = ds.copy()
 
-            return df_ready
+            return ds_ready
 
 def get_order_series(order_n:int)->pd.Series:
     """
-    Fetches a specific order as a Pandas Series from an API, retrying up to 3 times if an exception occurs.
+    Fetches a specific invoice or order as a Pandas Series from an API, retrying up to 3 times if an exception occurs.
 
     Arg.:
-        order_n (int): the order number to fetch.
+        order_n (int): the invoice or order number to fetch.
 
     Returns:
         pd.Series: a Pandas Series containing the order data, or None if the function fails to fetch the data after 3 attempts.
     """
 
-    df = None
+    ds = None
     i = 0
-    while df is None and i < 3:
+    auth_client, client = authenticate_on_intuit()
+    while ds is None and i < 3:
         try:
-            main_data = req.post(endpoint_url, timeout=30)
-            df = get_df_from_api(main_data)
-            order_series = df.loc[df[df.id == order_n].index[0]]
+            main_object = Invoice.choose([str(order_n)], field='DocNumber', qb=client)[0]
+            ds = get_ds_from_api(main_object)
         except Exception as e:
             logging.error('''Error when fetching data from the designated API! Trying again in half second.''')
             logging.critical(f'''Exception: {repr(e)}''')
-            df = None
+            ds = None
             time.sleep(.5)
             i += 1
         else:
-            return order_series
+            return ds
 
 def get_products_names(order_series:pd.Series)->list:
     """
@@ -111,11 +189,12 @@ def get_products_names(order_series:pd.Series)->list:
     """
 
     products_names = []
-    for i, products_title in enumerate(order_series.products_title):
-        #new_product_size_name = product_size + ' ' + order_series.products_name[i]
-        new_product_size_name = f'({i+1}) {products_title} - {order_series.products_name[i]}' if len(order_series.products_title) > 1 else f'{products_title} - {order_series.products_name[i]}'
-        #new_product_size_name = new_product_size_name if len(new_product_size_name) < 39 else new_product_size_name[:38]
-        products_names.append(new_product_size_name)
+    for i, line in enumerate(order_series.Line):
+        if line['LineNum'] == 0:
+            continue
+
+        new_product_name = line['Description'].strip()
+        products_names.append(new_product_name)
     
     return products_names
 
@@ -182,11 +261,11 @@ def get_address(
             address.append(address_line)
             i += 1
     elif address == '':
-        d_company = order_series.delivery_company.strip()
-        b_company = order_series.billing_company.strip()
-        line_1 = d_company #if d_company.lower() == b_company.lower() else b_company
-        line_2 = order_series.delivery_street_address
-        line_3 = order_series.delivery_city + ', ' + order_series.delivery_state + ' ' + order_series.delivery_postcode
+        b_company = order_series.CustomerRef['name'].strip()
+        d_company = b_company
+        line_1 = d_company
+        line_2 = f'''{order_series.ShipAddr['Line1']}''' if not {order_series.ShipAddr['Line2']} else f'''{order_series.ShipAddr['Line1']}\n{order_series.ShipAddr['Line2']}'''
+        line_3 = f'''{order_series.ShipAddr['City']}, {order_series.ShipAddr['CountrySubDivisionCode']}  {order_series.ShipAddr['PostalCode']}'''
         address = [line_1, line_2, line_3]
     else:
         address = address.splitlines()

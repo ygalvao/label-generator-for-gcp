@@ -11,13 +11,13 @@ from label_generator import get_order_series
 
 app = Flask(__name__)
 
-@app.route('/_show_order_info')
-def show_order_info(error:bool=False):
+@app.route('/_show_invoice_info')
+def show_invoice_info(error:bool=False):
     """
-    Retrieves order information and displays it to the user.
+    Retrieves invoice information and displays it to the user.
 
     Arguments:
-        error (bool, optional): if True, displays an error message instead of the order information.
+        error (bool, optional): if True, displays an error message instead of the invoice information.
 
     Returns:
         json: a JSON object containing the destination address, products, and attention details.
@@ -34,7 +34,7 @@ def show_order_info(error:bool=False):
         to_address = get_address(order_series, 'to', 'no', '', '')
         to_address = to_address[0] + '\n' + to_address[1] + '\n' + to_address[2]
         products = get_products_names(order_series)
-        d_name = order_series.delivery_name.strip()
+        d_name = order_series.ShipMethodRef['name'] if order_series.ShipMethodRef else ''
         delivery_name = d_name if 'pickup' not in d_name.strip().lower() and 'pick up' not in d_name.strip().lower() else ''
     else:
         error = True
@@ -111,7 +111,7 @@ def index():
                 )
             except Exception as e:
                 logging.critical(f'''Error! Is there an already-fetched order? Exception: {e}''')
-                show_order_info(error=True)
+                show_invoice_info(error=True)
 
     return render_template('index.html', result=result, link_to_pdf=link)
 

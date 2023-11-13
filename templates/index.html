@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Label Maker</title>
+    <title>4x6 Label Generator for QBO</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
@@ -11,8 +11,8 @@
 
       $(function() {
         $('#fetch').bind('submit', function() {
-          $.getJSON($SCRIPT_ROOT + '/_show_order_info', {
-            wo_n: $('input[name="wo_n"]').val()
+          $.getJSON($SCRIPT_ROOT + '/_show_invoice_info', {
+            order_n: $('input[name="order_n"]').val()
           }, function(data) {
             $("#destination").text(data.destination_address);
             $("#attn").text(data.attn);
@@ -84,7 +84,7 @@
           return $(this).val();//.toString();
         }).get();
         document.getElementById("products_qty").value = '"' + number_inputs + '"';
-        document.getElementById("wo_n2").value = document.getElementById("wo_n").value;
+        document.getElementById("order_n2").value = document.getElementById("order_n").value;
         document.getElementById("qty_of_chosen_items").value = checked;
 
         return true;
@@ -102,10 +102,10 @@
   <body>
     <div id="main">
       <form id="fetch" onsubmit="resetCountdown()">
-        <label>Work Order #:</label>
-        <input class="field" id="wo_n"  name="wo_n" type="number">
+        <label>Invoice #:</label>
+        <input class="field" id="order_n"  name="order_n" type="number">
         <br>
-        <input id="submit_wo_n" class="field" type="submit" name="Submit" value="Fetch Work Order">
+        <input id="submit_order_n" class="field" type="submit" name="Submit" value="Fetch Invoice">
       </form>
       <br><br>
       <form id="generate_label" action="{{ url_for('index') }}" method="POST" onsubmit="showLoader(); resetCountdown(); return validateForm();">
@@ -187,7 +187,7 @@
         <input id="products_qty" type="text" name="products_qty" class="hidden">
         <input id="texts_for_all_packages" type="text" name="products" class="hidden">
         <input id="qty_of_chosen_items" type="number" name="qty_of_chosen_items" class="hidden">
-        <input id="wo_n2" class="hidden"  name="wo_n2" type="number">
+        <input id="order_n2" class="hidden"  name="order_n2" type="number">
         <input id="submit_form" class="field" type="submit" name="Submit" value="Generate Label" disabled>
       </form>
     </div>
@@ -372,7 +372,7 @@
       function showLoader() {
         document.getElementById("loader").style.display = "block";
         document.getElementById("submit_form").disabled = true;
-        document.getElementById("submit_wo_n").disabled = true;
+        document.getElementById("submit_order_n").disabled = true;
         document.getElementById("main").style.display = "none";
         document.getElementById("loader").scrollIntoView({
             behavior: 'auto',
