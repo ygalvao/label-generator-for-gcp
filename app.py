@@ -23,7 +23,7 @@ def show_order_info(error:bool=False):
         json: a JSON object containing the destination address, products, and attention details.
     """
 
-    from label_maker import get_address, get_products_names # Lazy load, to prevent cold starts
+    from label_generator import get_address, get_products_names # Lazy load, to prevent cold starts
 
     global order_n
     order_n = request.args.get('order_n', 0, type=int)
@@ -73,7 +73,7 @@ def index():
             products_sizes_names = form['products'].strip('"').strip('||').split('||,')
         
         try:
-            from label_maker import output_label, logging # Lazy load, to prevent cold starts
+            from label_generator import output_label, logging # Lazy load, to prevent cold starts
 
             order_n_ = int(form['order_n2'])
             if order_n != order_n_:

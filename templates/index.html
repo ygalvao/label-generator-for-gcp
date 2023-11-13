@@ -11,7 +11,7 @@
 
       $(function() {
         $('#fetch').bind('submit', function() {
-          $.getJSON($SCRIPT_ROOT + '/_show_wo_info', {
+          $.getJSON($SCRIPT_ROOT + '/_show_order_info', {
             wo_n: $('input[name="wo_n"]').val()
           }, function(data) {
             $("#destination").text(data.destination_address);

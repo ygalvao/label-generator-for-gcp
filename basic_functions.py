@@ -8,9 +8,9 @@
 
 import os, json, sys, google.cloud.logging, logging
 
-client = google.cloud.logging.Client()
+#client = google.cloud.logging.Client()
 
-client.setup_logging()
+#client.setup_logging()
 
 logging.basicConfig(
     filename='log.log',
