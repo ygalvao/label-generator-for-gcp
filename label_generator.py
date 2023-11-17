@@ -105,24 +105,6 @@ def authenticate_on_intuit(args:list=args, intuit_keys:dict=intuit_keys, intuit_
 
     return auth_client, client
 
-def import_qbo_objects_list_to_df(object_:object, order_by:str, max_results:int, client:object)->pd.DataFrame:
-    """"""
-
-    # Importing objects - getting a list of objects from Intuit API
-    new_objects_list = [None]
-    objects = []
-    start_n = 1
-
-    while new_objects_list != []:
-        new_objects_list = object_.all(order_by=order_by, start_position=start_n, max_results=max_results, qb=client)
-        objects += new_objects_list
-        start_n += max_results
-
-    # Importing objects' "__dict__" into a Pandas DataFrame
-    final_df = pd.DataFrame([vars(new_object) for new_object in objects])
-
-    return final_df
-
 def get_ds_from_api(main_object:object)->pd.Series:
     """
     Imports the data from all orders available in the designated API into a Pandas DataFrame.
@@ -141,7 +123,7 @@ def get_ds_from_api(main_object:object)->pd.Series:
         return
     else:
         try:
-            ds = ds.applymap(lambda x: unescape(x) if type(x) == str else x)
+            ds = ds.apply(lambda x: unescape(x) if type(x) == str else x)
         except Exception as e:
             logging.error('Error when escaping HTML characters!')
             logging.critical(f'Exception: {e}')
@@ -203,17 +185,17 @@ def select_product(order_n:str, products_names:list)->list:
     Allows the user to select the desired product from a list of available products.
 
     Arguments:
-        order_n (int): the order number.
+        order_n (int): the invoice or order number.
         products (List[str]): a list of available product names.
 
     Returns:
         List[str]: a list containing the selected product name.
     """
 
-    print(f'These are the items for Order # {order_n}:\n')
+    print(f'These are the items for Invoice / Order # {order_n}:\n')
     print('Option # |   Product / Service')
-    for i, product_size_name in enumerate(products_names):
-        print(f'    {i+1}    | {product_size_name}')
+    for i, product_name in enumerate(products_names):
+        print(f'    {i+1}    | {product_name}')
 
     selected_item = int(input('Please, enter the option number for the product / service: '))
     selected_item = products_names[selected_item-1]
@@ -264,7 +246,7 @@ def get_address(
         b_company = order_series.CustomerRef['name'].strip()
         d_company = b_company
         line_1 = d_company
-        line_2 = f'''{order_series.ShipAddr['Line1']}''' if not {order_series.ShipAddr['Line2']} else f'''{order_series.ShipAddr['Line1']}\n{order_series.ShipAddr['Line2']}'''
+        line_2 = f'''{order_series.ShipAddr['Line1']}''' if not order_series.ShipAddr['Line2'] else f'''{order_series.ShipAddr['Line1']}\n{order_series.ShipAddr['Line2']}'''
         line_3 = f'''{order_series.ShipAddr['City']}, {order_series.ShipAddr['CountrySubDivisionCode']}  {order_series.ShipAddr['PostalCode']}'''
         address = [line_1, line_2, line_3]
     else:
@@ -309,14 +291,14 @@ def get_job_data(
 
     job_data = {}
     job_data['order_n'] = 'Order # ' + str(order_n)
-    job_data['po_n'] = order_series.PO_number if order_series.PO_number is not None else ''
+    #job_data['po_n'] = order_series.PO_number if order_series.PO_number is not None else ''
 
-    try:
-        int(job_data['po_n'][-4:])
-    except:
-        job_data['po_n'] = 'Ordered by: ' + job_data['po_n']
-    else:
-        job_data['po_n'] = 'P.O. #: ' + job_data['po_n']
+    # try:
+    #     int(job_data['po_n'][-4:])
+    # except:
+    #     job_data['po_n'] = 'Ordered by: ' + job_data['po_n']
+    # else:
+    #     job_data['po_n'] = 'P.O. #: ' + job_data['po_n']
 
     if add_job_info is None:
         job_data['additional_job_info'] = input('''Enter some additional information that you find relevant or just press "ENTER" to leave it blank: ''')
@@ -366,7 +348,7 @@ def get_job_details(
 
     job_details = get_job_data(order_series, order_n, add_job_info, package, packages_qty, qty_per_package)
 
-    return job_details['order_n'], job_details['po_n'], job_details['additional_job_info'], job_details['package']
+    return job_details['order_n'], '', job_details['additional_job_info'], job_details['package']
 
 def make_label(
     template:str,
@@ -460,11 +442,11 @@ def make_label(
         ws.page_margins.right = 0.
         ws.page_margins.top = 0.
         ws.page_margins.bottom = 0.
-        ws.column_dimensions['A'].width = 3.32 ##3. #2.75
+        ws.column_dimensions['A'].width = 3. ##3.32  #2.75
         ws.column_dimensions['B'].width = 1.25
-        ws.column_dimensions['C'].width = 33.25 ##25 #32. #28.89
-        ws.column_dimensions['D'].width = 6.75 ##3.62 #37.5 #27.5
-        ws.column_dimensions['E'].width = 32.5 ##27.85
+        ws.column_dimensions['C'].width = 25 ##33.25 #32. #28.89
+        ws.column_dimensions['D'].width = 3.62 ##6.75 ## #37.5 #27.5
+        ws.column_dimensions['E'].width = 27.85 ## 32.5
         ws.sheet_properties.outlinePr.applyStyles = True
         ws.sheet_properties.pageSetUpPr.fitToPage = False
         ws.delete_cols(6,4)
@@ -574,7 +556,7 @@ def generate_pdf(file_name:str)->None:
     finally:
         os.remove(file_name)
 
-    url_to_pdf = upload_to_bucket(file_name_pdf, './output/'+file_name_pdf, gcp_project)
+    url_to_pdf = upload_to_bucket(file_name_pdf, './output/'+file_name_pdf, f'{gcp_project}-processed-labels')
 
     logging.info(f'PDF created!\n')
     logging.info(f'Download it here: {url_to_pdf}')

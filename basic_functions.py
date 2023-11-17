@@ -8,9 +8,9 @@
 
 import os, json, sys, google.cloud.logging, logging, traceback
 
-#client = google.cloud.logging.Client()
+client = google.cloud.logging.Client()
 
-#client.setup_logging()
+client.setup_logging()
 
 logging.basicConfig(
     filename='log.log',
@@ -19,6 +19,8 @@ logging.basicConfig(
     format='%(asctime)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
     )
+console_handler = logging.StreamHandler(sys.stdout)
+logging.getLogger().addHandler(console_handler)
 
 args = sys.argv[1:] # List of arguments that were passed
 

@@ -74,7 +74,6 @@ def index():
         
         try:
             from label_generator import output_label, logging # Lazy load, to prevent cold starts
-
             order_n_ = int(form['order_n2'])
             if order_n != order_n_:
                 raise ValueError

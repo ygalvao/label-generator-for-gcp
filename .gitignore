@@ -7,4 +7,5 @@ trash
 print_this.pdf
 *.log
 *.bak
-google-cred*
+google-creds.json
+*keys.json
