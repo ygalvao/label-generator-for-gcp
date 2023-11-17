@@ -364,7 +364,7 @@ def make_label(
     to_address:str,
     additional_info_from:str,
     additional_info_to:str,
-    on_premises:bool=True,
+    on_premises:bool=False,
     )->tuple:
     """
     Creates the shipping label using the provided workbook (Excel file) and user inputs.
