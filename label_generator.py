@@ -363,7 +363,8 @@ def make_label(
     from_address:str,
     to_address:str,
     additional_info_from:str,
-    additional_info_to:str
+    additional_info_to:str,
+    on_premises:bool=True,
     )->tuple:
     """
     Creates the shipping label using the provided workbook (Excel file) and user inputs.
@@ -382,6 +383,8 @@ def make_label(
         to_address (str): the 'to' address to be printed on the label.
         additional_info_from (str): additional information for the 'from' address.
         additional_info_to (str): additional information for the 'to' address.
+        on_premises (bool, optional): if True, uses the on-premises template. The reason is
+        because cell sizes for cloud may differ (I don't know why). Default is False.
 
     Returns:
         tuple: containing the modified workbook object, a status message, and the order number.
@@ -442,11 +445,18 @@ def make_label(
         ws.page_margins.right = 0.
         ws.page_margins.top = 0.
         ws.page_margins.bottom = 0.
-        ws.column_dimensions['A'].width = 3. ##3.32  #2.75
         ws.column_dimensions['B'].width = 1.25
-        ws.column_dimensions['C'].width = 25 ##33.25 #32. #28.89
-        ws.column_dimensions['D'].width = 3.62 ##6.75 ## #37.5 #27.5
-        ws.column_dimensions['E'].width = 27.85 ## 32.5
+        if on_premises:
+            ws.column_dimensions['A'].width = 3.
+            ws.column_dimensions['C'].width = 25
+            ws.column_dimensions['D'].width = 3.62
+            ws.column_dimensions['E'].width = 27.85
+        else:
+            ws.column_dimensions['A'].width = 3.32  #2.75
+            ws.column_dimensions['C'].width = 33.25 #32. #28.89
+            ws.column_dimensions['D'].width = 6.75 #37.5 #27.5
+            ws.column_dimensions['E'].width = 32.5
+
         ws.sheet_properties.outlinePr.applyStyles = True
         ws.sheet_properties.pageSetUpPr.fitToPage = False
         ws.delete_cols(6,4)

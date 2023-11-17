@@ -2,9 +2,7 @@
 __pycache__
 .~lock*
 *copy*
-final_label*
 trash
-print_this.pdf
 *.log
 *.bak
 google-creds.json
