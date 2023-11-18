@@ -1,6 +1,6 @@
 # Label Generator for QBO
 
-![alt text](https://github.com/ygalvao/label-generator-for-qbo/screenshot.png?raw=true)
+![alt text](https://github.com/ygalvao/label-generator-for-qbo/blob/main/screenshot.png?raw=true)
 
 ## Description
 
