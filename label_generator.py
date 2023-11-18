@@ -35,10 +35,26 @@ gcp_project = json.load(open('google-creds.json', 'r'))['project_id']
 # Defining functions
 def get_tokens(auth_client:object)->tuple:
     """
+    Retrieves and returns OAuth tokens from the Intuit server for QuickBooks Online API access.
+
+    Args:
+        auth_client (object): The authentication client object used for OAuth operations.
+
+    Returns:
+        tuple: A tuple containing 'access_token' and 'refresh_token' for QuickBooks Online API access.
     """
 
     def finally_get_the_tokens(auth_code:str, realm_id:str)->str:
-        ''''''
+        """
+        Completes the token retrieval process by exchanging the authorization code for access and refresh tokens.
+
+        Args:
+            auth_code (str): The authorization code obtained from the Intuit server.
+            realm_id (str): The realm ID associated with the QuickBooks Online account.
+
+        Returns:
+            str: A tuple containing the 'access_token' and 'refresh_token' obtained from the Intuit server.
+        """
 
         ## Getting the tokens from Intuit server
         try:
@@ -76,7 +92,17 @@ def authenticate_on_intuit(
         intuit_keys:dict=intuit_keys,
         intuit_temp_keys:dict=intuit_temp_keys
         )->object:
-    """"""
+    """
+    Authenticates with QuickBooks Online via Intuit and initializes the QuickBooks client.
+
+    Args:
+        sandbox (bool): Specifies if the sandbox environment should be used.
+        intuit_keys (dict): A dictionary containing Intuit's client ID and company ID.
+        intuit_temp_keys (dict): A dictionary containing temporary keys for Intuit authentication.
+
+    Returns:
+        object: A tuple containing the authentication client and QuickBooks client objects.
+    """
 
     uri = CALLBACK_URI
     auth_client = AuthClient(
