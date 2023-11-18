@@ -1,3 +1,9 @@
+#************************************************************#
+#  Label Generator for QBO                                   #
+#                                                            #
+#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023  #
+#************************************************************#
+
 # Use the official lightweight Python image.
 # https://hub.docker.com/_/python
 FROM python:3.9.16-slim

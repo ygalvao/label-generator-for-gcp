@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 #************************************************************#
+#  Label Generator for QBO                                   #
 #                                                            #
 #  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023  #
-#                                                            #
 #************************************************************#
 
 import os

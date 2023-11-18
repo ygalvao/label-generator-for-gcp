@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-#*************************************************************#
-#                                                             #
-#  Written by Yuri H. Galvao <yuri@galvao.ca>, November 2022  #
-#                                                             #
-#*************************************************************#
+#************************************************************#
+#  Label Generator for QBO                                   #
+#                                                            #
+#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023  #
+#************************************************************#
 
 import os, json, sys, google.cloud.logging, logging, traceback
 
