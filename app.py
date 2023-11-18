@@ -6,11 +6,19 @@
 #                                                            #
 #************************************************************#
 
+import sys
 from flask import Flask, request, url_for, render_template, jsonify
 from label_generator import get_order_series
 
+# Declaring variables and instantiating objects
+args = sys.argv[1:] # List of arguments that were passed, if any
+
+on_premises = True if '--on-premises' in args else False
+yes_for_all = True if '--yes-for-all' in args else False
+
 app = Flask(__name__)
 
+# Defining functions - and decorating them
 @app.route('/_show_invoice_info')
 def show_invoice_info(error:bool=False):
     """

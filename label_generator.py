@@ -2,7 +2,7 @@
 
 #*************************************************************#
 #                                                             #
-#  Written by Yuri H. Galvao <yuri@galvao.ca>, November 2022  #
+#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023   #
 #                                                             #
 #*************************************************************#
 
@@ -364,7 +364,7 @@ def make_label(
     to_address:str,
     additional_info_from:str,
     additional_info_to:str,
-    on_premises:bool=False,
+    on_premises:bool=on_premises,
     )->tuple:
     """
     Creates the shipping label using the provided workbook (Excel file) and user inputs.

@@ -7,10 +7,12 @@
 #*************************************************************#
 
 import os, json, sys, google.cloud.logging, logging, traceback
+from app import on_premises, yes_for_all
 
-client = google.cloud.logging.Client()
-
-client.setup_logging()
+# Declaring variables and instantiating objects
+client = google.cloud.logging.Client() if not on_premises else None
+if client:
+    client.setup_logging()
 
 logging.basicConfig(
     filename='log.log',
@@ -22,10 +24,7 @@ logging.basicConfig(
 console_handler = logging.StreamHandler(sys.stdout)
 logging.getLogger().addHandler(console_handler)
 
-args = sys.argv[1:] # List of arguments that were passed
-
-yes_for_all = True if '--yes-for-all' in args else False
-
+# Defining functions
 def confirm(text:str)->bool:
     """
     Asks the user for confirmation using a provided text prompt.
