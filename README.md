@@ -6,7 +6,7 @@
 
 This Flask-based web application is designed for generating 4x6 shipping labels using QuickBooks Online (QBO) data and it is optimized for deployment on Google Cloud Run.
 
-Click [here](https://github.com/ygalvao/label-generator-for-qbo/blob/main/output/Example/final_label_-_2023-11-16_21_29_-_Order_1025.pdf) to see an example of a generated label (PDF).
+Click [here](https://github.com/ygalvao/label-generator-for-qbo/blob/main/output/Example/final_label_-_2023-11-16_21_29_-_Order_1025.pdf) to see an example of a generated PDF for 3 labels (one for each box).
 
 ## Quickstart
 
