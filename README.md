@@ -4,9 +4,7 @@
 
 This Flask-based web application is designed for generating 4x6 shipping labels using QuickBooks Online (QBO) data and it is optimized for deployment on Google Cloud Run.
 
-## Deployment on Google Cloud Run
-
-#### To deploy this application to Google Cloud Run using a Bash terminal (it should also work on PowerShell):
+## Quickstart
 
 1. Navigate to your local repository directory.
 
@@ -14,7 +12,11 @@ This Flask-based web application is designed for generating 4x6 shipping labels 
 cd your-repository-path/
 ```
 
-2. Run the following command:
+2. Replace or edit all ".example" files.
+
+#### To deploy this application to Google Cloud Run:
+
+- Run the following command:
 
 ```bash
 gcloud run deploy [DESIRED NAME FOR THE APP] --source . --region [DESIRED REGION] --allow-unauthenticated --memory 1G
@@ -24,6 +26,15 @@ Example:
 
 ```bash
 gcloud run deploy label-generator --source . --region us-central1 --allow-unauthenticated --memory 1G
+```
+
+#### To run this application on your local machine:
+
+- Run the following commands:
+
+```bash
+pip install -r requirements.txt
+python app.py --on-premises [--sandbox or --production]
 ```
 
 ## Application Flags
