@@ -7,9 +7,13 @@
 #*************************************************************#
 
 import os, json, sys, google.cloud.logging, logging, traceback
-from app import on_premises, yes_for_all
 
 # Declaring variables and instantiating objects
+args = sys.argv[1:] # List of arguments that were passed, if any
+
+on_premises = True if '--on-premises' in args else False
+yes_for_all = True if '--yes-for-all' in args else False
+breakpoint()
 client = google.cloud.logging.Client() if not on_premises else None
 if client:
     client.setup_logging()

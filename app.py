@@ -6,16 +6,11 @@
 #                                                            #
 #************************************************************#
 
-import sys
+import os
 from flask import Flask, request, url_for, render_template, jsonify
 from label_generator import get_order_series
 
-# Declaring variables and instantiating objects
-args = sys.argv[1:] # List of arguments that were passed, if any
-
-on_premises = True if '--on-premises' in args else False
-yes_for_all = True if '--yes-for-all' in args else False
-
+# Instantiating Flask app object
 app = Flask(__name__)
 
 # Defining functions - and decorating them
