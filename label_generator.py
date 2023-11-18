@@ -23,9 +23,9 @@ from intuitlib.enums import Scopes
 from quickbooks import QuickBooks
 from quickbooks.objects.invoice import Invoice
 
-# Declaring some constants and variables
+# Declaring some variables
 ## For Intuit
-CALLBACK_URI = 'https://developer.intuit.com/v2/OAuth2Playground/RedirectUrl'
+callback_uris = json.load(open('intuit_callback_uris.json', 'r'))
 intuit_keys = json.load(open('intuit_keys.json', 'r'))
 intuit_temp_keys = json.load(open('intuit_temp_keys.json', 'r'))
 
@@ -104,13 +104,13 @@ def authenticate_on_intuit(
         object: A tuple containing the authentication client and QuickBooks client objects.
     """
 
-    uri = CALLBACK_URI
+    uri = callback_uris['sandbox'] if sandbox else callback_uris['production']
     auth_client = AuthClient(
-        client_id=intuit_keys['client_id'],
-        client_secret=intuit_keys['client_secret'],
-        redirect_uri=uri,
-        environment='sandbox' if sandbox else 'production',
-        refresh_token=intuit_temp_keys['refresh_token'],
+        client_id = intuit_keys['client_id'],
+        client_secret = intuit_keys['client_secret'],
+        redirect_uri = uri,
+        environment = 'sandbox' if sandbox else 'production',
+        refresh_token = intuit_temp_keys['refresh_token'],
     )
 
     try:
