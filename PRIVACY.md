@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This Privacy Policy outlines the handling, storage, and protection of personal data collected by the QuickBooks Online 4x6 Label Generator, a web application designed for generating shipping labels.
+This Privacy Policy outlines the handling, storage, and protection of personal data collected by this software, which is a web application designed for generating 4x6 shipping labels.
 
 ## Data Collection and Use
 
@@ -30,4 +30,4 @@ The application reserves the right to modify this Privacy Policy at any time. Us
 
 For questions or concerns about the Privacy Policy, please contact Yuri H. Galvao at yuri@galvao.ca.
 
-## End of Privacy Policy
+#### End of Privacy Policy
