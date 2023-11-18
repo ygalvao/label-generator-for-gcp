@@ -1,5 +1,7 @@
 # Label Generator for QBO
 
+![alt text](https://github.com/ygalvao/label-generator-for-qbo/screenshot.png?raw=true)
+
 ## Description
 
 This Flask-based web application is designed for generating 4x6 shipping labels using QuickBooks Online (QBO) data and it is optimized for deployment on Google Cloud Run.
