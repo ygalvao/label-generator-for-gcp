@@ -13,6 +13,7 @@ args = sys.argv[1:] # List of arguments that were passed, if any
 
 on_premises = True if '--on-premises' in args else False
 yes_for_all = True if '--yes-for-all' in args else False
+sandbox = True if '--sandbox' in args else False
 
 client = google.cloud.logging.Client() if not on_premises else None
 if client:

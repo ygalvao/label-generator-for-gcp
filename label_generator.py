@@ -71,7 +71,11 @@ def get_tokens(auth_client:object)->tuple:
 
     return
 
-def authenticate_on_intuit(args:list=args, intuit_keys:dict=intuit_keys, intuit_temp_keys:dict=intuit_temp_keys)->object:
+def authenticate_on_intuit(
+        sandbox:bool=sandbox,
+        intuit_keys:dict=intuit_keys,
+        intuit_temp_keys:dict=intuit_temp_keys
+        )->object:
     """"""
 
     uri = CALLBACK_URI
@@ -79,7 +83,7 @@ def authenticate_on_intuit(args:list=args, intuit_keys:dict=intuit_keys, intuit_
         client_id=intuit_keys['client_id'],
         client_secret=intuit_keys['client_secret'],
         redirect_uri=uri,
-        environment='sandbox',
+        environment='sandbox' if sandbox else 'production',
         refresh_token=intuit_temp_keys['refresh_token'],
     )
 
