@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
-#************************************************************#
+# ************************************************************#
 #  Label Generator for QBO                                   #
 #                                                            #
-#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023  #
-#************************************************************#
+#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2024  #
+# ************************************************************#
 
 import os
-from flask import Flask, request, url_for, render_template, jsonify
+
+from flask import Flask, request, render_template, jsonify
+
 from label_generator import get_order_series
 
 # Instantiating Flask app object
 app = Flask(__name__)
 
+
 # Defining functions - and decorating them
 @app.route('/_show_invoice_info')
-def show_invoice_info(error:bool=False):
+def show_invoice_info(error: bool = False):
     """
     Retrieves invoice information and displays it to the user.
 
@@ -26,7 +29,7 @@ def show_invoice_info(error:bool=False):
         json: a JSON object containing the destination address, products, and attention details.
     """
 
-    from label_generator import get_address, get_products_names # Lazy load, to prevent cold starts
+    from label_generator import get_address, get_products_names  # Lazy load, to prevent cold starts
 
     global order_n
     order_n = request.args.get('order_n', 0, type=int)
@@ -48,6 +51,7 @@ def show_invoice_info(error:bool=False):
         delivery_name = ''
 
     return jsonify(destination_address=to_address, products=products, attn=delivery_name)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -71,12 +75,13 @@ def index():
 
         try:
             products_sizes_names = form['product'].strip('"').replace(',', ', ')
-            products_sizes_names = [products_sizes_names] if len(products_sizes_names) < 98 else [products_sizes_names[:97]]
+            products_sizes_names = [products_sizes_names] if len(products_sizes_names) < 98 else [
+                products_sizes_names[:97]]
         except:
             products_sizes_names = form['products'].strip('"').strip('||').split('||,')
-        
+
         try:
-            from label_generator import output_label, logging # Lazy load, to prevent cold starts
+            from label_generator import output_label, logging  # Lazy load, to prevent cold starts
             order_n_ = int(form['order_n2'])
             if order_n != order_n_:
                 raise ValueError
@@ -116,6 +121,7 @@ def index():
                 show_invoice_info(error=True)
 
     return render_template('index.html', result=result, link_to_pdf=link)
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

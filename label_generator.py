@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 
-#************************************************************#
+# ************************************************************#
 #  Label Generator for QBO                                   #
 #                                                            #
-#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023  #
-#************************************************************#
+#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2024  #
+# ************************************************************#
 
-import pandas as pd
-import requests as req
+import pathlib
 import subprocess as subp
-import pathlib, time
-from basic_functions import *
+import time
 from datetime import datetime
 from html import unescape
-from openpyxl import load_workbook
-from openpyxl.drawing.image import Image
-from openpyxl.worksheet.page import PrintPageSetup
+
+import pandas as pd
 from google.cloud import storage
-from oauth2client.service_account import ServiceAccountCredentials
 from intuitlib.client import AuthClient
 from intuitlib.enums import Scopes
+from openpyxl import load_workbook
+from openpyxl.drawing.image import Image
 from quickbooks import QuickBooks
 from quickbooks.objects.invoice import Invoice
+
+from basic_functions import *
 
 # Declaring some variables
 ## For Intuit
@@ -32,8 +32,9 @@ intuit_temp_keys = json.load(open('intuit_temp_keys.json', 'r'))
 ## For Google
 gcp_project = json.load(open('google-creds.json', 'r'))['project_id']
 
+
 # Defining functions
-def get_tokens(auth_client:object)->tuple:
+def get_tokens(auth_client: object) -> tuple:
     """
     Retrieves and returns OAuth tokens from the Intuit server for QuickBooks Online API access.
 
@@ -44,7 +45,7 @@ def get_tokens(auth_client:object)->tuple:
         tuple: A tuple containing 'access_token' and 'refresh_token' for QuickBooks Online API access.
     """
 
-    def finally_get_the_tokens(auth_code:str, realm_id:str)->str:
+    def finally_get_the_tokens(auth_code: str, realm_id: str) -> str:
         """
         Completes the token retrieval process by exchanging the authorization code for access and refresh tokens.
 
@@ -67,7 +68,7 @@ def get_tokens(auth_client:object)->tuple:
 
         return (access_t, refresh_t)
 
-    uri = auth_client.get_authorization_url([Scopes.ACCOUNTING]) # Gets the uri from Intuit server
+    uri = auth_client.get_authorization_url([Scopes.ACCOUNTING])  # Gets the uri from Intuit server
     print('Please, go to the following URL and authorize the app:\n\n', uri, '\n')
 
     time.sleep(8)
@@ -87,11 +88,12 @@ def get_tokens(auth_client:object)->tuple:
 
     return
 
+
 def authenticate_on_intuit(
-        sandbox:bool=sandbox,
-        intuit_keys:dict=intuit_keys,
-        intuit_temp_keys:dict=intuit_temp_keys
-        )->object:
+        sandbox: bool = sandbox,
+        intuit_keys: dict = intuit_keys,
+        intuit_temp_keys: dict = intuit_temp_keys
+) -> object:
     """
     Authenticates with QuickBooks Online via Intuit and initializes the QuickBooks client.
 
@@ -106,11 +108,11 @@ def authenticate_on_intuit(
 
     uri = callback_uris['sandbox'] if sandbox else callback_uris['production']
     auth_client = AuthClient(
-        client_id = intuit_keys['client_id'],
-        client_secret = intuit_keys['client_secret'],
-        redirect_uri = uri,
-        environment = 'sandbox' if sandbox else 'production',
-        refresh_token = intuit_temp_keys['refresh_token'],
+        client_id=intuit_keys['client_id'],
+        client_secret=intuit_keys['client_secret'],
+        redirect_uri=uri,
+        environment='sandbox' if sandbox else 'production',
+        refresh_token=intuit_temp_keys['refresh_token'],
     )
 
     try:
@@ -135,7 +137,8 @@ def authenticate_on_intuit(
 
     return auth_client, client
 
-def get_ds_from_api(main_object:object)->pd.Series:
+
+def get_ds_from_api(main_object: object) -> pd.Series:
     """
     Imports the data from all orders available in the designated API into a Pandas DataFrame.
 
@@ -162,7 +165,8 @@ def get_ds_from_api(main_object:object)->pd.Series:
 
             return ds_ready
 
-def get_order_series(order_n:int)->pd.Series:
+
+def get_order_series(order_n: int) -> pd.Series:
     """
     Fetches a specific invoice or order as a Pandas Series from an API, retrying up to 3 times if an exception occurs.
 
@@ -189,7 +193,8 @@ def get_order_series(order_n:int)->pd.Series:
         else:
             return ds
 
-def get_products_names(order_series:pd.Series)->list:
+
+def get_products_names(order_series: pd.Series) -> list:
     """
     Extracts a list of product names from a order as a Pandas Series.
 
@@ -207,10 +212,11 @@ def get_products_names(order_series:pd.Series)->list:
 
         new_product_name = line['Description'].strip()
         products_names.append(new_product_name)
-    
+
     return products_names
 
-def select_product(order_n:str, products_names:list)->list:
+
+def select_product(order_n: str, products_names: list) -> list:
     """
     Allows the user to select the desired product from a list of available products.
 
@@ -225,21 +231,22 @@ def select_product(order_n:str, products_names:list)->list:
     print(f'These are the items for Invoice / Order # {order_n}:\n')
     print('Option # |   Product / Service')
     for i, product_name in enumerate(products_names):
-        print(f'    {i+1}    | {product_name}')
+        print(f'    {i + 1}    | {product_name}')
 
     selected_item = int(input('Please, enter the option number for the product / service: '))
-    selected_item = products_names[selected_item-1]
+    selected_item = products_names[selected_item - 1]
     logging.info(f'Selected item: {selected_item}')
 
     return [selected_item]
 
+
 def get_address(
-    order_series:pd.Series,
-    type_:str,
-    change:str,
-    address:str,
-    additional_info:str
-    )->tuple:
+        order_series: pd.Series,
+        type_: str,
+        change: str,
+        address: str,
+        additional_info: str
+) -> tuple:
     """
     Retrieves the 'from' or 'to' address based on the user's inputs and order data.
 
@@ -265,7 +272,8 @@ def get_address(
             return
 
     if address == []:
-        print(f'''For the "{type_}" field, enter the address (3 lines, in which the 1st line must be the company name and the 3rd line can be blank): ''')
+        print(
+            f'''For the "{type_}" field, enter the address (3 lines, in which the 1st line must be the company name and the 3rd line can be blank): ''')
         i = 0
         while i != 3:
             print("> ", end="")
@@ -276,7 +284,8 @@ def get_address(
         b_company = order_series.CustomerRef['name'].strip()
         d_company = b_company
         line_1 = d_company
-        line_2 = f'''{order_series.ShipAddr['Line1']}''' if not order_series.ShipAddr['Line2'] else f'''{order_series.ShipAddr['Line1']}\n{order_series.ShipAddr['Line2']}'''
+        line_2 = f'''{order_series.ShipAddr['Line1']}''' if not order_series.ShipAddr[
+            'Line2'] else f'''{order_series.ShipAddr['Line1']}\n{order_series.ShipAddr['Line2']}'''
         line_3 = f'''{order_series.ShipAddr['City']}, {order_series.ShipAddr['CountrySubDivisionCode']}  {order_series.ShipAddr['PostalCode']}'''
         address = [line_1, line_2, line_3]
     else:
@@ -301,14 +310,15 @@ def get_address(
     else:
         return line_1, line_2, line_3, additional_info
 
+
 def get_job_data(
-    order_series:pd.Series,
-    order_n:int,
-    add_job_info:str,
-    package:str,
-    packages_qty:int,
-    qty_per_package:list
-    )->dict:
+        order_series: pd.Series,
+        order_n: int,
+        add_job_info: str,
+        package: str,
+        packages_qty: int,
+        qty_per_package: list
+) -> dict:
     """
     Gets the job data from the DF, based on user's inputs and from the designated API.
 
@@ -321,7 +331,7 @@ def get_job_data(
 
     job_data = {}
     job_data['order_n'] = 'Order # ' + str(order_n)
-    #job_data['po_n'] = order_series.PO_number if order_series.PO_number is not None else ''
+    # job_data['po_n'] = order_series.PO_number if order_series.PO_number is not None else ''
 
     # try:
     #     int(job_data['po_n'][-4:])
@@ -331,7 +341,8 @@ def get_job_data(
     #     job_data['po_n'] = 'P.O. #: ' + job_data['po_n']
 
     if add_job_info is None:
-        job_data['additional_job_info'] = input('''Enter some additional information that you find relevant or just press "ENTER" to leave it blank: ''')
+        job_data['additional_job_info'] = input(
+            '''Enter some additional information that you find relevant or just press "ENTER" to leave it blank: ''')
     else:
         job_data['additional_job_info'] = add_job_info
 
@@ -350,22 +361,25 @@ def get_job_data(
 
     while qty_per_package == None:
         try:
-            qty_per_package = list_from_input('''Enter the quantity of items that are inside each package or just press "ENTER" to leave it blank: ''')
+            qty_per_package = list_from_input(
+                '''Enter the quantity of items that are inside each package or just press "ENTER" to leave it blank: ''')
         except ValueError:
-            logging.error('Please, enter only the quantity of items inside each package! Use comma to separate the quantities.')
+            logging.error(
+                'Please, enter only the quantity of items inside each package! Use comma to separate the quantities.')
 
     job_data['package'].append(qty_per_package)
 
     return job_data
 
+
 def get_job_details(
-    order_series:pd.Series,
-    order_n:int,
-    add_job_info:str,
-    package:str,
-    packages_qty:int,
-    qty_per_package:list
-    )->tuple:
+        order_series: pd.Series,
+        order_n: int,
+        add_job_info: str,
+        package: str,
+        packages_qty: int,
+        qty_per_package: list
+) -> tuple:
     """
     Gets the job data from the designated API, based on user's inputs.
     """
@@ -380,22 +394,23 @@ def get_job_details(
 
     return job_details['order_n'], '', job_details['additional_job_info'], job_details['package']
 
+
 def make_label(
-    template:str,
-    order_series:pd.Series,
-    selected_item:list,
-    spreadsheet:object,
-    order_n:int,
-    add_job_info:str,
-    package:str,
-    packages_qty:int,
-    qty_per_package:list,
-    from_address:str,
-    to_address:str,
-    additional_info_from:str,
-    additional_info_to:str,
-    on_premises:bool=on_premises,
-    )->tuple:
+        template: str,
+        order_series: pd.Series,
+        selected_item: list,
+        spreadsheet: object,
+        order_n: int,
+        add_job_info: str,
+        package: str,
+        packages_qty: int,
+        qty_per_package: list,
+        from_address: str,
+        to_address: str,
+        additional_info_from: str,
+        additional_info_to: str,
+        on_premises: bool = on_premises,
+) -> tuple:
     """
     Creates the shipping label using the provided workbook (Excel file) and user inputs.
 
@@ -422,15 +437,15 @@ def make_label(
 
     if order_series is None:
         order_series = get_order_series(order_n)
-    
+
     order_df_row = order_series
 
     wb = spreadsheet
 
     from_address = get_address(
         order_df_row,
-      'from',
-      'no' if from_address in ('', ' ', None, []) else 'yes',
+        'from',
+        'no' if from_address in ('', ' ', None, []) else 'yes',
         from_address,
         additional_info_from
     )
@@ -438,16 +453,16 @@ def make_label(
     if to_address != '':
         to_address = get_address(
             order_df_row,
-          'to',
-          'yes',
+            'to',
+            'yes',
             to_address,
             additional_info_to
         )
     else:
         to_address = get_address(
             order_df_row,
-          'to',
-          'no',
+            'to',
+            'no',
             to_address,
             additional_info_to
         )
@@ -461,7 +476,8 @@ def make_label(
         qty_per_package
     )
 
-    selected_item = select_product(order_n, get_products_names(order_series)) if selected_item is None else selected_item
+    selected_item = select_product(order_n,
+                                   get_products_names(order_series)) if selected_item is None else selected_item
 
     qty_of_qties = len(qty_per_package)
     checked_items = int(qty_of_qties / packages_qty)
@@ -482,14 +498,14 @@ def make_label(
             ws.column_dimensions['D'].width = 3.62
             ws.column_dimensions['E'].width = 27.85
         else:
-            ws.column_dimensions['A'].width = 3.32  #2.75
-            ws.column_dimensions['C'].width = 33.25 #32. #28.89
-            ws.column_dimensions['D'].width = 6.75 #37.5 #27.5
+            ws.column_dimensions['A'].width = 3.32  # 2.75
+            ws.column_dimensions['C'].width = 33.25  # 32. #28.89
+            ws.column_dimensions['D'].width = 6.75  # 37.5 #27.5
             ws.column_dimensions['E'].width = 32.5
 
         ws.sheet_properties.outlinePr.applyStyles = True
         ws.sheet_properties.pageSetUpPr.fitToPage = False
-        ws.delete_cols(6,4)
+        ws.delete_cols(6, 4)
         ws.print_area = 'A1:E12'
         ws.set_printer_settings(0, orientation='landscape')
         ws.page_setup.paperHeight = '152mm'
@@ -511,7 +527,7 @@ def make_label(
             except:
                 ws['C11'] = selected_item[0]
 
-            ws['E8'] = f'{package_data[0]} {n+1} of {package_data[1]}  '
+            ws['E8'] = f'{package_data[0]} {n + 1} of {package_data[1]}  '
 
             try:
                 ws['D11'] = f'Total qty: {sum(package_data[2])}  '
@@ -528,25 +544,26 @@ def make_label(
             except:
                 ws['C11'] = selected_item[0]
 
-            ws['E8'] = f'{package_data[0]} {n+1} of {package_data[1]}  '
+            ws['E8'] = f'{package_data[0]} {n + 1} of {package_data[1]}  '
 
             ws['E10'] = f'Qty in this {package_data[0].lower()}:'
 
             try:
-                qties_info = ''                
+                qties_info = ''
                 for i, n in enumerate(package_data[2]):
                     if i < checked_items:
-                        qties_info += f'Item {i+1}: {n}\n'
+                        qties_info += f'Item {i + 1}: {n}\n'
 
                 ws['E11'] = qties_info
                 qties_info = ''
-                package_data[2] = package_data[2][checked_items:]           
+                package_data[2] = package_data[2][checked_items:]
             except Exception as e:
                 ws['E11'] = f'Item 1: {package_data[2]}'
 
     return wb, 'Finished', job_details[0].split(' ')[-1]
 
-def upload_to_bucket(blob_name:str, path_to_file:str, bucket_name:str)->str:
+
+def upload_to_bucket(blob_name: str, path_to_file: str, bucket_name: str) -> str:
     """
     Uploads a file to a specified Google Cloud Storage bucket.
 
@@ -562,17 +579,18 @@ def upload_to_bucket(blob_name:str, path_to_file:str, bucket_name:str)->str:
     # Explicitly use service account credentials by specifying the private key file.
     storage_client = storage.Client.from_service_account_json('google-creds.json')
 
-    #print(buckets = list(storage_client.list_buckets())
+    # print(buckets = list(storage_client.list_buckets())
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(path_to_file)
 
     os.remove(path_to_file)
-    
+
     # Returns a public url
     return blob.public_url
 
-def generate_pdf(file_name:str)->None:
+
+def generate_pdf(file_name: str) -> None:
     """
     Converts the Excel file (.xlsx) into a PDF file and uploads it to a specified Google Cloud Storage bucket.
 
@@ -587,36 +605,37 @@ def generate_pdf(file_name:str)->None:
 
     try:
         p = subp.run(cmd, shell=True)
-    #convert_to_pdf = UnoConverter()
-    #convert_to_pdf.convert(inpath=file_name, outpath='print_this.pdf', convert_to='pdf')
+    # convert_to_pdf = UnoConverter()
+    # convert_to_pdf.convert(inpath=file_name, outpath='print_this.pdf', convert_to='pdf')
     except Exception as e:
         logging.error(e)
     else:
-        file_name_pdf = file_name[:-5]+'.pdf'
+        file_name_pdf = file_name[:-5] + '.pdf'
     finally:
         os.remove(file_name)
 
-    url_to_pdf = upload_to_bucket(file_name_pdf, './output/'+file_name_pdf, f'{gcp_project}-processed-labels')
+    url_to_pdf = upload_to_bucket(file_name_pdf, './output/' + file_name_pdf, f'{gcp_project}-processed-labels')
 
     logging.info(f'PDF created!\n')
     logging.info(f'Download it here: {url_to_pdf}')
 
     return url_to_pdf
 
+
 def output_label(
-    template:str='',
-    order_series:pd.Series=None,
-    order_n:int=None,
-    selected_item:list=None,
-    add_job_info:str=None,
-    package:str=None,
-    packages_qty:int=None,
-    qty_per_package:list=None,
-    from_address:str=[],
-    to_address:str=[],
-    additional_info_from:str=None,
-    additional_info_to:str=None
-    )->tuple:
+        template: str = '',
+        order_series: pd.Series = None,
+        order_n: int = None,
+        selected_item: list = None,
+        add_job_info: str = None,
+        package: str = None,
+        packages_qty: int = None,
+        qty_per_package: list = None,
+        from_address: str = [],
+        to_address: str = [],
+        additional_info_from: str = None,
+        additional_info_to: str = None
+) -> tuple:
     """
     Generates a shipping label based on the given inputs and saves it as an Excel file (.xlsx). Then, converts the Excel file into a PDF file, and uploads it to a Google Cloud Storage bucket.
 
@@ -638,7 +657,7 @@ def output_label(
         tuple: a tuple containing a status message ('Success') and the public URL to access the generated PDF file in the Google Cloud Storage bucket.
     """
 
-    local_path = pathlib.Path().resolve().__str__() # Gets the local path
+    local_path = pathlib.Path().resolve().__str__()  # Gets the local path
 
     try:
         wb = load_workbook(f'./templates/template{template}.xlsx')
@@ -666,7 +685,7 @@ def output_label(
         to_address,
         additional_info_from,
         additional_info_to
-        )
+    )
 
     if status == 'Finished':
         logging.info('Label made successfully!\n')
@@ -680,6 +699,7 @@ def output_label(
     link_to_pdf = generate_pdf(file_name)
 
     return 'Success', link_to_pdf
+
 
 if __name__ == '__main__':
     output_label()

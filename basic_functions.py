@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 
-#************************************************************#
+# ************************************************************#
 #  Label Generator for QBO                                   #
 #                                                            #
-#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2023  #
-#************************************************************#
+#  Written by Yuri H. Galvao <yuri@galvao.ca>, January 2024  #
+# ************************************************************#
 
-import os, json, sys, google.cloud.logging, logging, traceback
+import google.cloud.logging
+import json
+import logging
+import os
+import sys
+import traceback
 
 # Declaring variables and instantiating objects
-args = sys.argv[1:] # List of arguments that were passed, if any
+args = sys.argv[1:]  # List of arguments that were passed, if any
 
-on_premises = True if '--on-premises' in args else False # If True, the script is running on a local machine
+on_premises = True if '--on-premises' in args else False  # If True, the script is running on a local machine
 yes_for_all = True if '--yes-for-all' in args else False
-sandbox = True if '--sandbox' in args else False # If True, the script is running on Intuit's (QBO) sandbox environment
+sandbox = True if '--sandbox' in args else False  # If True, the script is running on Intuit's (QBO) sandbox environment
 
 client = google.cloud.logging.Client() if not on_premises else None
 if client:
@@ -25,12 +30,13 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
-    )
+)
 console_handler = logging.StreamHandler(sys.stdout)
 logging.getLogger().addHandler(console_handler)
 
+
 # Defining functions
-def confirm(text:str)->bool:
+def confirm(text: str) -> bool:
     """
     Asks the user for confirmation using a provided text prompt.
 
@@ -42,13 +48,14 @@ def confirm(text:str)->bool:
     """
 
     confirm = 'y' if yes_for_all else input(text)
-    
+
     if confirm.lower() not in ('n', 'no'):
         return True
     else:
         return False
 
-def check_file(file:str)->bool:
+
+def check_file(file: str) -> bool:
     """
     Checks if a file with the given name exists in the current directory.
 
@@ -64,7 +71,8 @@ def check_file(file:str)->bool:
     else:
         return False
 
-def ask_for_data(required_data:tuple, file_name_no_extension:str, ask:bool=True)->dict:
+
+def ask_for_data(required_data: tuple, file_name_no_extension: str, ask: bool = True) -> dict:
     """
     Asks the user for the required data and saves it to a configuration file.
 
@@ -82,18 +90,19 @@ def ask_for_data(required_data:tuple, file_name_no_extension:str, ask:bool=True)
         for data in required_data:
             data_dict[data] = input(f'Enter the {data}: ')
 
-        open(file_name_no_extension+'.json', 'w').write(json.dumps(data_dict))
+        open(file_name_no_extension + '.json', 'w').write(json.dumps(data_dict))
     else:
         for data in required_data:
             data_dict[data[0]] = data[1]
 
-        open(file_name_no_extension+'.json', 'w').write(json.dumps(data_dict))
-    
+        open(file_name_no_extension + '.json', 'w').write(json.dumps(data_dict))
+
     print()
 
     return data_dict
 
-def list_from_input(text:str)->list:
+
+def list_from_input(text: str) -> list:
     """
     Converts a user's input, containing comma-separated values, into a list.
 
